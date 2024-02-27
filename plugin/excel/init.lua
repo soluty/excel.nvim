@@ -17,44 +17,41 @@ vim.cmd([[
 
 local M = {}
 
-function RenderTableTest()
-	local result = vim.api.nvim_exec("let ret = ExcelNvimOpenFile('ss') | echo ret", true)
-	print(result)
-	-- local NuiTable = require("nui.table")
-	-- local Text = require("nui.text")
-	-- local tbl = NuiTable({
-	--   bufnr = 0,
-	--   columns = {
-	--     {
-	--       align = "center",
-	--       header = "Name",
-	--       columns = {
-	--         { accessor_key = "firstName", header = "First" },
-	--         {
-	--           id = "lastName",
-	--           accessor_fn = function(row)
-	--             return row.lastName
-	--           end,
-	--           header = "Last",
-	--         },
-	--       },
-	--     },
-	--     {
-	--       align = "right",
-	--       accessor_key = "age",
-	--       cell = function(cell)
-	--         return Text(tostring(cell.get_value()), "DiagnosticInfo")
-	--       end,
-	--       header = "Age",
-	--     },
-	--   },
-	--   data = {
-	--     { firstName = "John", lastName = "Doe", age = 42 },
-	--     { firstName = "Jane", lastName = "Doe", age = 27 },
-	--   },
-	-- })
-	--
-	-- tbl:render()
+local function convertToBase26(i)
+	local result = ""
+	while i > 0 do
+		local remainder = (i - 1) % 26
+		result = string.char(remainder + 65) .. result
+		i = math.floor((i - 1) / 26)
+	end
+	return result
+end
+
+-- M.ExcelNvimShowTable = function ()
+function ExcelNvimShowTable()
+	local json = require("json")
+	local fileName = vim.fn.expand("%:p")
+	local resultStr = vim.api.nvim_exec(string.format("let ret = ExcelNvimOpenFile('%s') | echo ret", fileName), true)
+	local NuiTable = require("nui.table")
+	local Text = require("nui.text")
+	resultStr = string.gsub(resultStr, "'", '"')
+	local result = json.decode(resultStr)
+	local tblData = result.Tables[1]
+	local maxCol = tblData.MaxCol
+	local columns = {}
+	for i = 1, maxCol do
+		table.insert(columns, {
+			header = convertToBase26(i),
+			accessor_key = i,
+		})
+	end
+	vim.cmd("tabedit")
+	local tbl = NuiTable({
+		bufnr = 0,
+		columns = columns,
+		data = tblData.Cells,
+	})
+	tbl:render()
 end
 
 return M
