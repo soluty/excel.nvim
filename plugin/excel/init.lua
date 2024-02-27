@@ -29,7 +29,7 @@ end
 
 -- M.ExcelNvimShowTable = function ()
 function ExcelNvimShowTable()
-	local json = require("json")
+	local json = require("excel.json")
 	local fileName = vim.fn.expand("%:p")
 	local resultStr = vim.api.nvim_exec(string.format("let ret = ExcelNvimOpenFile('%s') | echo ret", fileName), true)
 	local NuiTable = require("nui.table")
